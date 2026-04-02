@@ -10,10 +10,10 @@ TELEGRAM_CHAT_IDS = os.environ.get("TELEGRAM_CHAT_IDS", "").split(",")
 
 LOCALES = [
     ("ChIJS-EB_2PLvJARuPs7C79WkL4", "Distrito Buenos Aires - Abasto"),
-    ("ChIJza1fbHPLvJAR5WJiv93cXJ8", "Distrito Buenos Aires - Galerias"),
-    ("ChIJs4GTPatcvJARMAtJ7kaxxPI", "Distrito Buenos Aires - Caballito"),
+    ("ChIJza1fbHPLvJAR5WJiv93cXJ8", "Distrito Bs As - Sede 2"),
+    ("ChIJs4GTPatcvJARMAtJ7kaxxPI", "Distrito Bs As - Sede 3"),
     ("ChIJjd8nNVN17pYR1gAy8B-WJNk", "Distrito Mza"),
-    ("ChIJl6rV9eW3vJARz0u2NvD9Xi4", "Distrito Buenos Aires - Dot"),
+    ("ChIJl6rV9eW3vJARz0u2NvD9Xi4", "Distrito BsAs - Sede 5"),
 ]
 
 def obtener_info_lugar(place_id):
