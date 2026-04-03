@@ -1,7 +1,6 @@
 import os
 import requests
 from datetime import datetime
-import google.generativeai as genai
 
 GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
@@ -27,7 +26,6 @@ def buscar_place_id(lat, lng, nombre):
         }
         r = requests.get("https://maps.googleapis.com/maps/api/place/findplacefromtext/json", params=params, timeout=10)
         data = r.json()
-        print(f"Búsqueda {nombre}: {data.get('status')} - {data.get('candidates', [])}")
         if data.get("candidates"):
             return data["candidates"][0]["place_id"]
         return None
@@ -56,8 +54,6 @@ def obtener_info_lugar(place_id):
 
 def analizar_con_gemini(nombre, rating, total, resenas):
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
         texto = "\n".join([f"- {r.get('author_name')} ({r.get('rating')}⭐): {r.get('text','')}" for r in resenas])
         prompt = f"""Analizá las reseñas de "{nombre}" (Rating: {rating}/5, Total: {total}).
 RESEÑAS: {texto}
@@ -67,9 +63,14 @@ Respondé exactamente así:
 💡 RECOMENDACIONES: (máximo 2)
 📊 TENDENCIA: (una frase)
 Máximo 150 palabras."""
-        return model.generate_content(prompt).text
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={GEMINI_API_KEY}"
+        r = requests.post(url, json=payload, timeout=30)
+        data = r.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:
-        return f"Error análisis: {e}"
+        print(f"Error Gemini: {e}")
+        return "Error generando análisis."
 
 def enviar_telegram(mensaje):
     for chat_id in TELEGRAM_CHAT_IDS:
