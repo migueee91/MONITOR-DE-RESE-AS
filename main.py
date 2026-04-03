@@ -64,7 +64,7 @@ RECOMENDACIONES: maximo 2
 TENDENCIA: una frase
 Maximo 150 palabras."""
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         r = requests.post(url, json=payload, timeout=30)
         data = r.json()
         print(f"Gemini status: {r.status_code}")
@@ -73,11 +73,11 @@ Maximo 150 palabras."""
             return data["candidates"][0]["content"]["parts"][0]["text"]
         elif "error" in data:
             print(f"Gemini error: {data['error']}")
-            return "Error en análisis."
-        return "Sin análisis disponible."
+            return "Error en analisis."
+        return "Sin analisis disponible."
     except Exception as e:
         print(f"Error Gemini: {e}")
-        return "Error generando análisis."
+        return "Error generando analisis."
 
 def enviar_telegram(mensaje):
     for chat_id in TELEGRAM_CHAT_IDS:
@@ -99,7 +99,7 @@ def main():
         print(f"Procesando {nombre_default}...")
         place_id = buscar_place_id(lat, lng, nombre_default)
         if not place_id:
-            informe += f"🏪 {nombre_default}\n❌ No se encontró el local.\n\n"
+            informe += f"🏪 {nombre_default}\n❌ No se encontro el local.\n\n"
             continue
         info = obtener_info_lugar(place_id)
         if not info:
@@ -109,12 +109,11 @@ def main():
         rating = info.get("rating", "N/D")
         total = info.get("user_ratings_total", 0)
         resenas = info.get("reviews", [])
-        analisis = analizar_con_gemini(nombre, rating, total, resenas) if resenas else "Sin reseñas recientes."
-        informe += f"🏪 {nombre}\n⭐ {rating}/5 ({total} reseñas totales)\n{analisis}\n\n"
+        analisis = analizar_con_gemini(nombre, rating, total, resenas) if resenas else "Sin resenas recientes."
+        informe += f"🏪 {nombre}\n⭐ {rating}/5 ({total} resenas totales)\n{analisis}\n\n"
 
-    informe += "🤖 Monitor Automático de Reseñas"
+    informe += "🤖 Monitor Automatico de Resenas"
     enviar_telegram(informe)
     print("✅ Informe enviado")
 
 if __name__ == "__main__":
-    main()
