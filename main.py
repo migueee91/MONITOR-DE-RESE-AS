@@ -57,7 +57,7 @@ def obtener_info_lugar(place_id):
 def analizar_con_gemini(nombre, rating, total, resenas):
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-pro')
         texto = "\n".join([f"- {r.get('author_name')} ({r.get('rating')}⭐): {r.get('text','')}" for r in resenas])
         prompt = f"""Analizá las reseñas de "{nombre}" (Rating: {rating}/5, Total: {total}).
 RESEÑAS: {texto}
