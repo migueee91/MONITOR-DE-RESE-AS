@@ -55,19 +55,26 @@ def obtener_info_lugar(place_id):
 def analizar_con_gemini(nombre, rating, total, resenas):
     try:
         texto = "\n".join([f"- {r.get('author_name')} ({r.get('rating')}⭐): {r.get('text','')}" for r in resenas])
-        prompt = f"""Analizá las reseñas de "{nombre}" (Rating: {rating}/5, Total: {total}).
-RESEÑAS: {texto}
-Respondé exactamente así:
-✅ PUNTOS FUERTES: (máximo 3)
-⚠️ PUNTOS DÉBILES: (máximo 3)
-💡 RECOMENDACIONES: (máximo 2)
-📊 TENDENCIA: (una frase)
-Máximo 150 palabras."""
+        prompt = f"""Analiza las resenas de {nombre} con rating {rating} sobre 5 y {total} resenas totales.
+Resenas recientes: {texto}
+Responde exactamente asi:
+PUNTOS FUERTES: maximo 3
+PUNTOS DEBILES: maximo 3
+RECOMENDACIONES: maximo 2
+TENDENCIA: una frase
+Maximo 150 palabras."""
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
         r = requests.post(url, json=payload, timeout=30)
         data = r.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        print(f"Gemini status: {r.status_code}")
+        print(f"Gemini data: {data}")
+        if "candidates" in data:
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+        elif "error" in data:
+            print(f"Gemini error: {data['error']}")
+            return "Error en análisis."
+        return "Sin análisis disponible."
     except Exception as e:
         print(f"Error Gemini: {e}")
         return "Error generando análisis."
@@ -86,24 +93,24 @@ def enviar_telegram(mensaje):
 
 def main():
     fecha = datetime.now().strftime("%d/%m/%Y")
-    informe = f"📊 <b>INFORME DIARIO DE RESEÑAS</b>\n📅 {fecha} - 23:59hs\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+    informe = f"📊 INFORME DIARIO DE RESEÑAS\n📅 {fecha} - 23:59hs\n\n"
 
     for lat, lng, nombre_default in LOCALES:
         print(f"Procesando {nombre_default}...")
         place_id = buscar_place_id(lat, lng, nombre_default)
         if not place_id:
-            informe += f"🏪 <b>{nombre_default}</b>\n❌ No se encontró el local.\n\n"
+            informe += f"🏪 {nombre_default}\n❌ No se encontró el local.\n\n"
             continue
         info = obtener_info_lugar(place_id)
         if not info:
-            informe += f"🏪 <b>{nombre_default}</b>\n❌ Error obteniendo datos.\n\n"
+            informe += f"🏪 {nombre_default}\n❌ Error obteniendo datos.\n\n"
             continue
         nombre = info.get("name", nombre_default)
         rating = info.get("rating", "N/D")
         total = info.get("user_ratings_total", 0)
         resenas = info.get("reviews", [])
         analisis = analizar_con_gemini(nombre, rating, total, resenas) if resenas else "Sin reseñas recientes."
-        informe += f"🏪 <b>{nombre}</b>\n⭐ {rating}/5 ({total} reseñas totales)\n{analisis}\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        informe += f"🏪 {nombre}\n⭐ {rating}/5 ({total} reseñas totales)\n{analisis}\n\n"
 
     informe += "🤖 Monitor Automático de Reseñas"
     enviar_telegram(informe)
