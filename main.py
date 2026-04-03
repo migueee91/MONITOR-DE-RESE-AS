@@ -64,7 +64,7 @@ Respondé exactamente así:
 📊 TENDENCIA: (una frase)
 Máximo 150 palabras."""
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={GEMINI_API_KEY}"
+   url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
         r = requests.post(url, json=payload, timeout=30)
         data = r.json()
         return data["candidates"][0]["content"]["parts"][0]["text"]
