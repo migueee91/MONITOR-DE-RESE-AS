@@ -9,12 +9,31 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_IDS = os.environ.get("TELEGRAM_CHAT_IDS", "").split(",")
 
 LOCALES = [
-    ("ChIJS-EB_2PLvJARuPs7C79WkL4", "Distrito Buenos Aires - Abasto"),
-    ("ChIJza1fbHPLvJAR5WJiv93cXJ8", "Distrito Bs As - Sede 2"),
-    ("ChIJs4GTPatcvJARMAtJ7kaxxPI", "Distrito Bs As - Sede 3"),
-    ("ChIJjd8nNVN17pYR1gAy8B-WJNk", "Distrito Mza"),
-    ("ChIJl6rV9eW3vJARz0u2NvD9Xi4", "Distrito BsAs - Sede 5"),
+    ("-34.6038802", "-58.4109897", "Distrito Buenos Aires - Abasto"),
+    ("-34.598775",  "-58.375071",  "Distrito Buenos Aires - Galerias"),
+    ("-34.6185106", "-58.4373451", "Distrito Buenos Aires - Caballito"),
+    ("-32.9014375", "-68.7992918", "Distrito Mza"),
+    ("-34.5464842", "-58.4878536", "Distrito Buenos Aires - Dot"),
 ]
+
+def buscar_place_id(lat, lng, nombre):
+    try:
+        params = {
+            "input": "Distrito",
+            "inputtype": "textquery",
+            "locationbias": f"circle:50@{lat},{lng}",
+            "fields": "place_id,name",
+            "key": GOOGLE_PLACES_API_KEY
+        }
+        r = requests.get("https://maps.googleapis.com/maps/api/place/findplacefromtext/json", params=params, timeout=10)
+        data = r.json()
+        print(f"Búsqueda {nombre}: {data.get('status')} - {data.get('candidates', [])}")
+        if data.get("candidates"):
+            return data["candidates"][0]["place_id"]
+        return None
+    except Exception as e:
+        print(f"Error buscando {nombre}: {e}")
+        return None
 
 def obtener_info_lugar(place_id):
     try:
@@ -25,8 +44,8 @@ def obtener_info_lugar(place_id):
             "reviews_sort": "newest",
             "key": GOOGLE_PLACES_API_KEY
         }
-        response = requests.get("https://maps.googleapis.com/maps/api/place/details/json", params=params, timeout=10)
-        data = response.json()
+        r = requests.get("https://maps.googleapis.com/maps/api/place/details/json", params=params, timeout=10)
+        data = r.json()
         if data.get("status") == "OK":
             return data["result"]
         print(f"Error Places API: {data.get('status')} - {data.get('error_message','')}")
@@ -68,8 +87,12 @@ def main():
     fecha = datetime.now().strftime("%d/%m/%Y")
     informe = f"📊 <b>INFORME DIARIO DE RESEÑAS</b>\n📅 {fecha} - 23:59hs\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
 
-    for place_id, nombre_default in LOCALES:
+    for lat, lng, nombre_default in LOCALES:
         print(f"Procesando {nombre_default}...")
+        place_id = buscar_place_id(lat, lng, nombre_default)
+        if not place_id:
+            informe += f"🏪 <b>{nombre_default}</b>\n❌ No se encontró el local.\n\n"
+            continue
         info = obtener_info_lugar(place_id)
         if not info:
             informe += f"🏪 <b>{nombre_default}</b>\n❌ Error obteniendo datos.\n\n"
