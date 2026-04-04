@@ -21,10 +21,17 @@ def obtener_info(place_id):
  return d["result"] if d.get("status")=="OK" else None
 
 def analizar(nombre,rating,total,resenas):
- r=requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}",timeout=10)
- modelos=r.json()
- print(f"Modelos disponibles: {modelos}")
- return "Listando modelos..."
+ texto="\n".join([f"- {r.get('author_name')} ({r.get('rating')} estrellas): {r.get('text','')}" for r in resenas])
+ prompt=f"Analiza resenas de {nombre} rating {rating}/5 total {total}. Resenas: {texto}. Responde en espanol con emojis exactamente asi: PUNTOS FUERTES (maximo 3), PUNTOS DEBILES (maximo 3), RECOMENDACIONES (maximo 2), TENDENCIA (1 frase). Maximo 150 palabras."
+ payload={"contents":[{"parts":[{"text":prompt}]}]}
+ url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+ r=requests.post(url,json=payload,timeout=30)
+ d=r.json()
+ print(f"Gemini: {r.status_code}")
+ if "candidates" in d:
+  return d["candidates"][0]["content"]["parts"][0]["text"]
+ print(f"Gemini error: {d}")
+ return "Sin analisis disponible."
 
 def enviar(msg):
  for chat_id in TELEGRAM_CHAT_IDS:
@@ -50,7 +57,7 @@ def main():
   resenas=info.get("reviews",[])
   analisis=analizar(nombre,rating,total,resenas) if resenas else "Sin reseñas recientes."
   informe+=f"🏪 {nombre_default}\n⭐ {rating}/5 ({total} reseñas totales)\n{analisis}\n\n"
- informe+="🤖 Monitor Automatico de Reseñas"
+ informe+="🤖 Monitor Automático de Reseñas"
  enviar(informe)
  print("Informe enviado")
 
