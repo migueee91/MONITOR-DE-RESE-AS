@@ -24,7 +24,7 @@ def analizar(nombre,rating,total,resenas):
  texto="\n".join([f"- {r.get('author_name')} ({r.get('rating')}estrellas): {r.get('text','')}" for r in resenas])
  prompt=f"Analiza resenas de {nombre} rating {rating}/5 total {total}. Resenas: {texto}. Responde con: PUNTOS FUERTES (3), PUNTOS DEBILES (3), RECOMENDACIONES (2), TENDENCIA (1 frase). Max 150 palabras."
  payload={"contents":[{"parts":[{"text":prompt}]}]}
- url=f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+ url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
  r=requests.post(url,json=payload,timeout=30)
  d=r.json()
  print(f"Gemini: {r.status_code} {d}")
